@@ -1,0 +1,3 @@
+# Pinot
+
+Project initialized.
