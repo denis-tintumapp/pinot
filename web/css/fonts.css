@@ -1,0 +1,28 @@
+/**
+ * Fuentes personalizadas para Pinot
+ * DynaPuff - Fuente principal para branding y títulos
+ * Disponible desde Google Fonts
+ */
+
+/* Importar DynaPuff desde Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=DynaPuff:wght@400;500;600;700&display=swap');
+
+/* Clase para aplicar DynaPuff a títulos y branding */
+.font-branding {
+  font-family: 'DynaPuff', cursive, sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+/* Clase para títulos con DynaPuff */
+.font-title {
+  font-family: 'DynaPuff', cursive, sans-serif;
+  font-weight: 600;
+}
+
+/* Clase para branding (logo, nombre de marca) */
+.font-logo {
+  font-family: 'DynaPuff', cursive, sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}

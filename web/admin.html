@@ -1,0 +1,424 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <title>Pinot - Panel de Administración</title>
+  <meta name="theme-color" content="#6b21a8" />
+  <meta name="description" content="Panel de administración para gestionar usuarios" />
+  <base href="/">
+  
+  <script>
+    // Suprimir warning de producción de Tailwind CDN
+    const originalWarn = console.warn;
+    console.warn = function(...args) {
+      if (args[0] && typeof args[0] === 'string' && args[0].includes('cdn.tailwindcss.com should not be used in production')) {
+        return;
+      }
+      originalWarn.apply(console, args);
+    };
+  </script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    setTimeout(() => {
+      console.warn = console.warn || (() => {});
+    }, 1000);
+  </script>
+  
+  <!-- Fuentes personalizadas -->
+  <link rel="stylesheet" href="/css/fonts.css">
+  
+  <style>
+    body { 
+      font-family: system-ui, -apple-system, Inter, Segoe UI, Roboto, sans-serif; 
+      background: #f3f4f6;
+    }
+    
+    .glass-effect {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(0, 0, 0, 0.1);
+    }
+    
+    .table-row:hover {
+      background-color: #f9fafb;
+    }
+    
+    .badge {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    
+    .badge-success {
+      background-color: #d1fae5;
+      color: #065f46;
+    }
+    
+    .badge-warning {
+      background-color: #fef3c7;
+      color: #92400e;
+    }
+    
+    .badge-info {
+      background-color: #dbeafe;
+      color: #1e40af;
+    }
+    
+    .spinner {
+      border: 3px solid rgba(0, 0, 0, 0.1);
+      border-top: 3px solid #667eea;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      animation: spin 1s linear infinite;
+      display: inline-block;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <!-- Login de Superusuario (si no está autenticado) -->
+  <div id="loginContainer" class="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-purple-600 to-indigo-700">
+    <div class="glass-effect rounded-2xl p-8 shadow-2xl w-full max-w-md">
+      <div class="text-center mb-6">
+        <h1 class="text-3xl font-bold text-gray-800 mb-2 font-branding">Pinot</h1>
+        <p class="text-gray-600">Panel de Administración</p>
+      </div>
+      
+      <form id="loginForm" class="space-y-4">
+        <div>
+          <label for="adminPassword" class="block text-gray-700 font-medium mb-2">
+            Contraseña de Superusuario
+          </label>
+          <input
+            type="password"
+            id="adminPassword"
+            required
+            placeholder="Ingresa la contraseña"
+            class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            autocomplete="off"
+          />
+        </div>
+        
+        <div id="loginError" class="hidden text-red-600 text-sm"></div>
+        
+        <button
+          type="submit"
+          id="loginButton"
+          class="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-semibold py-3 rounded-lg shadow-lg hover:shadow-xl transition-all"
+        >
+          Ingresar
+        </button>
+      </form>
+    </div>
+  </div>
+  
+  <!-- Panel de Administración (si está autenticado) -->
+  <div id="adminContainer" class="hidden min-h-screen p-4">
+    <!-- Header -->
+    <header class="bg-white shadow-sm mb-6 rounded-lg p-4">
+      <div class="flex justify-between items-center">
+        <div>
+          <h1 class="text-2xl font-bold text-gray-800 font-branding">Pinot Admin</h1>
+          <p class="text-gray-600 text-sm">Panel de administración de usuarios</p>
+        </div>
+        <button
+          id="logoutButton"
+          class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+        >
+          Cerrar Sesión
+        </button>
+      </div>
+    </header>
+    
+    <!-- Tabs -->
+    <div class="bg-white rounded-lg shadow-sm mb-6">
+      <div class="border-b border-gray-200">
+        <nav class="flex -mb-px">
+          <button
+            id="tabAnfitriones"
+            class="tab-button active px-6 py-3 text-sm font-medium text-purple-600 border-b-2 border-purple-600"
+            data-tab="anfitriones"
+          >
+            Anfitriones
+          </button>
+          <button
+            id="tabParticipantes"
+            class="tab-button px-6 py-3 text-sm font-medium text-gray-500 hover:text-gray-700 border-b-2 border-transparent hover:border-gray-300"
+            data-tab="participantes"
+          >
+            Participantes
+          </button>
+        </nav>
+      </div>
+    </div>
+    
+    <!-- Contenido: Anfitriones -->
+    <div id="tabContentAnfitriones" class="tab-content">
+      <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-xl font-bold text-gray-800">Anfitriones</h2>
+          <div class="flex gap-2">
+            <input
+              type="text"
+              id="searchAnfitriones"
+              placeholder="Buscar por nombre o email..."
+              class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            />
+            <select
+              id="filterTipoAnfitrion"
+              class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            >
+              <option value="">Todos los tipos</option>
+              <option value="efimero">Efímeros</option>
+              <option value="persistente">Persistentes</option>
+            </select>
+          </div>
+        </div>
+        
+        <div id="anfitrionesLoading" class="text-center py-8">
+          <div class="spinner mx-auto"></div>
+          <p class="text-gray-600 mt-2">Cargando anfitriones...</p>
+        </div>
+        
+        <div id="anfitrionesTable" class="hidden overflow-x-auto">
+          <table class="w-full">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email Verificado</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Eventos Creados</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Creado</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="anfitrionesTableBody" class="bg-white divide-y divide-gray-200">
+              <!-- Se llena dinámicamente -->
+            </tbody>
+          </table>
+        </div>
+        
+        <div id="anfitrionesEmpty" class="hidden text-center py-8 text-gray-500">
+          No se encontraron anfitriones
+        </div>
+      </div>
+    </div>
+    
+    <!-- Contenido: Participantes -->
+    <div id="tabContentParticipantes" class="tab-content hidden">
+      <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-xl font-bold text-gray-800">Participantes</h2>
+          <input
+            type="text"
+            id="searchParticipantes"
+            placeholder="Buscar por nombre o evento..."
+            class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+          />
+        </div>
+        
+        <div id="participantesLoading" class="text-center py-8">
+          <div class="spinner mx-auto"></div>
+          <p class="text-gray-600 mt-2">Cargando participantes...</p>
+        </div>
+        
+        <div id="participantesTable" class="hidden overflow-x-auto">
+          <table class="w-full">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Evento ID</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Creado</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="participantesTableBody" class="bg-white divide-y divide-gray-200">
+              <!-- Se llena dinámicamente -->
+            </tbody>
+          </table>
+        </div>
+        
+        <div id="participantesEmpty" class="hidden text-center py-8 text-gray-500">
+          No se encontraron participantes
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Modal de Edición de Anfitrión -->
+  <div id="editAnfitrionModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="glass-effect rounded-2xl p-8 shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-bold text-gray-800">Editar Anfitrión</h2>
+        <button
+          id="closeEditModal"
+          class="text-gray-500 hover:text-gray-700 text-2xl"
+        >
+          ×
+        </button>
+      </div>
+      
+      <form id="editAnfitrionForm" class="space-y-4">
+        <input type="hidden" id="editAnfitrionId" />
+        
+        <div>
+          <label for="editNombre" class="block text-gray-700 font-medium mb-2">
+            Nombre <span class="text-red-500">*</span>
+          </label>
+          <input
+            type="text"
+            id="editNombre"
+            required
+            class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+          />
+        </div>
+        
+        <div>
+          <label for="editEmail" class="block text-gray-700 font-medium mb-2">
+            Email <span class="text-red-500">*</span>
+          </label>
+          <input
+            type="email"
+            id="editEmail"
+            required
+            class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+          />
+        </div>
+        
+        <div>
+          <label for="editTipo" class="block text-gray-700 font-medium mb-2">
+            Tipo
+          </label>
+          <select
+            id="editTipo"
+            class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+          >
+            <option value="efimero">Efímero</option>
+            <option value="persistente">Persistente</option>
+          </select>
+        </div>
+        
+        <div>
+          <label for="editEmailVerificado" class="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              id="editEmailVerificado"
+              class="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+            />
+            <span class="text-gray-700 font-medium">Email Verificado</span>
+          </label>
+        </div>
+        
+        <div>
+          <label for="editEventosCreados" class="block text-gray-700 font-medium mb-2">
+            Eventos Creados
+          </label>
+          <input
+            type="number"
+            id="editEventosCreados"
+            min="0"
+            class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+          />
+        </div>
+        
+        <div id="editError" class="hidden text-red-600 text-sm"></div>
+        
+        <div class="flex gap-3 pt-4">
+          <button
+            type="submit"
+            id="saveEditButton"
+            class="flex-1 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-semibold py-3 rounded-lg shadow-lg hover:shadow-xl transition-all"
+          >
+            Guardar Cambios
+          </button>
+          <button
+            type="button"
+            id="cancelEditButton"
+            class="flex-1 bg-gray-300 text-gray-700 font-semibold py-3 rounded-lg hover:bg-gray-400 transition-all"
+          >
+            Cancelar
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+  
+  <!-- Modal de Edición de Participante -->
+  <div id="editParticipanteModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="glass-effect rounded-2xl p-8 shadow-2xl w-full max-w-md">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-bold text-gray-800">Editar Participante</h2>
+        <button
+          id="closeEditParticipanteModal"
+          class="text-gray-500 hover:text-gray-700 text-2xl"
+        >
+          ×
+        </button>
+      </div>
+      
+      <form id="editParticipanteForm" class="space-y-4">
+        <input type="hidden" id="editParticipanteId" />
+        
+        <div>
+          <label for="editParticipanteNombre" class="block text-gray-700 font-medium mb-2">
+            Nombre <span class="text-red-500">*</span>
+          </label>
+          <input
+            type="text"
+            id="editParticipanteNombre"
+            required
+            class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+          />
+        </div>
+        
+        <div>
+          <label for="editParticipanteEventoId" class="block text-gray-700 font-medium mb-2">
+            ID del Evento
+          </label>
+          <input
+            type="text"
+            id="editParticipanteEventoId"
+            readonly
+            class="w-full px-4 py-3 rounded-lg border border-gray-300 bg-gray-100 text-gray-600 font-mono text-sm"
+          />
+        </div>
+        
+        <div id="editParticipanteError" class="hidden text-red-600 text-sm"></div>
+        
+        <div class="flex gap-3 pt-4">
+          <button
+            type="submit"
+            id="saveEditParticipanteButton"
+            class="flex-1 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-semibold py-3 rounded-lg shadow-lg hover:shadow-xl transition-all"
+          >
+            Guardar Cambios
+          </button>
+          <button
+            type="button"
+            id="cancelEditParticipanteButton"
+            class="flex-1 bg-gray-300 text-gray-700 font-semibold py-3 rounded-lg hover:bg-gray-400 transition-all"
+          >
+            Cancelar
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+  
+  <script type="module" src="/js/admin-panel.js"></script>
+</body>
+</html>

@@ -43,3 +43,10 @@ build/
 # Temporary files
 *.tmp
 *.temp
+
+# Scripts con secretos (no subir a GitHub)
+functions/get-token-*.js
+functions/get-refresh-token.js
+
+
+
