@@ -84,20 +84,20 @@ export default defineConfig({
     emptyOutDir: true,
     rollupOptions: {
       input: {
-        // Entry point principal de React
-        main: resolve(__dirname, 'web/index.html'),
+        // Entry point principal de React (relativo a root: './web')
+        main: './index.html',
         // Archivos de autenticación que necesitan ser bundlados con sus dependencias
-        'auth/auth': resolve(__dirname, 'web/js/auth/auth.ts'),
-        'auth/auth-guard': resolve(__dirname, 'web/js/auth/auth-guard.ts'),
-        'auth/verify': resolve(__dirname, 'web/js/auth/verify.ts'),
-        'auth/signup': resolve(__dirname, 'web/js/auth/signup.ts'),
-        'auth/login': resolve(__dirname, 'web/js/auth/login.ts'),
+        'auth/auth': './js/auth/auth.ts',
+        'auth/auth-guard': './js/auth/auth-guard.ts',
+        'auth/verify': './js/auth/verify.ts',
+        'auth/signup': './js/auth/signup.ts',
+        'auth/login': './js/auth/login.ts',
         // 'auth/user-ui': DEPRECATED - movido a .deprecated/
-        'auth/pin': resolve(__dirname, 'web/js/auth/pin.ts'),
+        'auth/pin': './js/auth/pin.ts',
         // Archivos de eventos que necesitan ser bundlados
-        'event/events-setup': resolve(__dirname, 'web/js/event/events-setup.ts'),
-        'event/events-result': resolve(__dirname, 'web/js/event/events-result.ts'),
-        'event/events-history': resolve(__dirname, 'web/js/event/events-history.ts'),
+        'event/events-setup': './js/event/events-setup.ts',
+        'event/events-result': './js/event/events-result.ts',
+        'event/events-history': './js/event/events-history.ts',
         // Archivos de admin - DEPRECATED (migrados a React), pero mantener para compatibilidad con HTML legacy
         // 'admin/admin-ui': DEPRECATED - movido a .deprecated/
         // 'admin/changelog-ui': DEPRECATED - movido a .deprecated/
@@ -105,7 +105,7 @@ export default defineConfig({
         // Archivo principal de participación - DEPRECATED (migrado a React)
         // 'participar': DEPRECATED - movido a .deprecated/
         // Firestore.js necesita ser bundleado para resolver imports de Firebase
-        'firestore': resolve(__dirname, 'web/js/firestore.js')
+        'firestore': './js/firestore.js'
       },
       output: {
         entryFileNames: 'js/[name]-[hash].js',
