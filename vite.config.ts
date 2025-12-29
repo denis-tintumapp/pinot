@@ -37,9 +37,10 @@ export default defineConfig({
       plugins: [
       // The plugin will run tests for the stories defined in your Storybook config
       // See options at: https://storybook.js.org/docs/next/writing-tests/integrations/vitest-addon#storybooktest
-      storybookTest({
+      // Solo cargar Storybook durante tests, no durante build
+      process.env.NODE_ENV !== 'production' ? storybookTest({
         configDir: path.join(dirname, '.storybook')
-      })],
+      }) : null].filter(Boolean),
       test: {
         name: 'storybook',
         browser: {
@@ -57,9 +58,10 @@ export default defineConfig({
       plugins: [
       // The plugin will run tests for the stories defined in your Storybook config
       // See options at: https://storybook.js.org/docs/next/writing-tests/integrations/vitest-addon#storybooktest
-      storybookTest({
+      // Solo cargar Storybook durante tests, no durante build
+      process.env.NODE_ENV !== 'production' ? storybookTest({
         configDir: path.join(dirname, '.storybook')
-      })],
+      }) : null].filter(Boolean),
       test: {
         name: 'storybook',
         browser: {
