@@ -104,8 +104,8 @@ export default defineConfig({
         // 'admin/admin-ui-dashboard': DEPRECATED - movido a .deprecated/
         // Archivo principal de participación - DEPRECATED (migrado a React)
         // 'participar': DEPRECATED - movido a .deprecated/
-        // Firestore.js necesita ser bundleado para resolver imports de Firebase
-        'firestore': resolve(__dirname, 'web', 'js', 'firestore.js')
+        // Firestore.ts necesita ser bundleado para resolver imports de Firebase
+        'firestore': resolve(__dirname, 'web', 'js', 'firestore.ts')
       },
       output: {
         entryFileNames: 'js/[name]-[hash].js',
