@@ -1,0 +1,289 @@
+/**
+ * Estilos globales de la aplicaci?n
+ * Importa Tailwind CSS y estilos personalizados
+ */
+
+@import '../css/styles.css';
+@import '../css/fonts.css';
+@import '../css/pinot-brand.css';
+
+/* Estilos globales adicionales para React */
+body {
+  font-family: system-ui, -apple-system, Inter, Segoe UI, Roboto, sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+/* Utilidades para drag & drop */
+.draggable {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.draggable:active {
+  cursor: grabbing;
+}
+
+.droppable.drag-over {
+  border-color: #8b5cf6;
+  background-color: #f3e8ff;
+}
+
+/* Estilos para la puerta animada */
+.door-panel {
+  transform-origin: left center;
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.door-handle {
+  transition: transform 0.3s ease;
+}
+
+/* Animaci?n de la puerta al hacer hover - tambi?n cuando se hace hover en el grupo completo */
+a.group:hover .door-panel,
+a[href="/auth/signup"]:hover .door-panel,
+.group\/anfitrion:hover a .door-panel {
+  transform: perspective(500px) rotateY(-45deg) translateX(-5px) !important;
+}
+
+a.group:hover .door-handle,
+a[href="/auth/signup"]:hover .door-handle,
+.group\/anfitrion:hover a .door-handle {
+  transform: translateX(2px) !important;
+}
+
+/* Aumentar intensidad de la animaci?n de la bandera cuando se hace hover en el grupo */
+.group\/anfitrion:hover .host-flag-banner {
+  animation-duration: 1.5s;
+  transform: scale(1.05);
+}
+
+.group\/anfitrion:hover .host-flag-text {
+  animation-duration: 1.5s;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* Animaci?n en touch devices */
+@media (hover: none) and (pointer: coarse) {
+  a.group:active .door-panel,
+  a[href="/auth/signup"]:active .door-panel {
+    transform: perspective(500px) rotateY(-30deg) translateX(-3px) !important;
+  }
+
+  a.group:active .door-handle,
+  a[href="/auth/signup"]:active .door-handle {
+    transform: translateX(1px) !important;
+  }
+}
+
+/* Leyenda animada tipo bandera para "Anfitri?n" */
+.host-flag-banner {
+  position: relative;
+  animation: flagWave 2.5s ease-in-out infinite;
+  transform-origin: left center;
+}
+
+.host-flag-text {
+  position: relative;
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.15);
+  animation: flagTextWave 2.5s ease-in-out infinite;
+  display: inline-block;
+}
+
+/* Animaci?n de bandera flameando - m?s realista */
+@keyframes flagWave {
+  0% {
+    transform: translateY(0) rotate(-1.5deg) scaleY(1);
+  }
+  20% {
+    transform: translateY(-2px) rotate(2deg) scaleY(0.98);
+  }
+  40% {
+    transform: translateY(1px) rotate(-1deg) scaleY(1.02);
+  }
+  60% {
+    transform: translateY(-1px) rotate(1.5deg) scaleY(0.99);
+  }
+  80% {
+    transform: translateY(0) rotate(-0.5deg) scaleY(1.01);
+  }
+  100% {
+    transform: translateY(0) rotate(-1.5deg) scaleY(1);
+  }
+}
+
+/* Animaci?n del texto de la bandera - efecto de onda */
+@keyframes flagTextWave {
+  0% {
+    transform: translateX(0) scaleY(1) skewY(0deg);
+  }
+  20% {
+    transform: translateX(1px) scaleY(0.96) skewY(1deg);
+  }
+  40% {
+    transform: translateX(-1px) scaleY(1.04) skewY(-1deg);
+  }
+  60% {
+    transform: translateX(0.5px) scaleY(0.98) skewY(0.5deg);
+  }
+  80% {
+    transform: translateX(-0.5px) scaleY(1.02) skewY(-0.5deg);
+  }
+  100% {
+    transform: translateX(0) scaleY(1) skewY(0deg);
+  }
+}
+
+/* Mejorar ?rea t?ctil en m?viles */
+@media (hover: none) and (pointer: coarse) {
+  a[href="/auth/signup"] {
+    padding: 8px;
+    margin: -8px;
+    -webkit-tap-highlight-color: rgba(255, 255, 255, 0.2);
+    tap-highlight-color: rgba(255, 255, 255, 0.2);
+  }
+}
+
+/* Spinner para loading */
+.spinner {
+  border: 3px solid rgba(147, 51, 234, 0.2);
+  border-top: 3px solid #a855f7; /* purple-500 */
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  animation: spin 1s linear infinite;
+  display: inline-block;
+}
+
+/* Spinner más visible para temas dark */
+.bg-purple-950 .spinner,
+.bg-purple-900 .spinner,
+[class*="bg-purple-9"] .spinner {
+  border-color: rgba(196, 181, 253, 0.2); /* purple-300 con opacidad */
+  border-top-color: #c4b5fd; /* purple-300 - más visible en dark */
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Animaci?n fade-in para mensajes */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Estilos para el Panel de Admin */
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.admin-table thead {
+  background-color: #f9fafb;
+}
+
+.admin-table th {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.admin-table tbody tr {
+  border-top: 1px solid #e5e7eb;
+}
+
+.admin-table tbody tr:hover {
+  background-color: #f9fafb;
+}
+
+.admin-table td {
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  color: #111827;
+}
+
+.admin-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.admin-badge-success {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.admin-badge-warning {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.admin-badge-info {
+  background-color: #dbeafe;
+  color: #1e40af;
+}
+
+.admin-badge-blue {
+  background-color: #dbeafe;
+  color: #1e40af;
+}
+
+.admin-badge-yellow {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.admin-badge-green {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+/* Estilos para el badge de reCAPTCHA - asegurar visibilidad */
+.grecaptcha-badge {
+  visibility: visible !important;
+  opacity: 1 !important;
+  display: block !important;
+  z-index: 9999 !important;
+}
+
+/* Asegurar que el badge no esté oculto */
+.grecaptcha-badge[style*="visibility: hidden"],
+.grecaptcha-badge[style*="display: none"],
+.grecaptcha-badge[style*="opacity: 0"] {
+  visibility: visible !important;
+  opacity: 1 !important;
+  display: block !important;
+}
+
+
+
+
+
+
+
+
+
+
+
