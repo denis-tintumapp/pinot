@@ -1,0 +1,80 @@
+name: Code Quality
+
+on:
+  pull_request:
+    branches: ['**']
+  push:
+    branches:
+      - main
+      - develop
+
+jobs:
+  bundle-size:
+    name: Bundle Size Analysis
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 8
+      
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+      
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      
+      - name: Build application
+        run: pnpm run build
+      
+      - name: Analyze bundle size
+        run: |
+          echo "## 📦 Bundle Size Analysis" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Main Bundle" >> $GITHUB_STEP_SUMMARY
+          if [ -d "dist/js" ]; then
+            du -sh dist/js/*.js | sort -h | head -10 >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Chunks" >> $GITHUB_STEP_SUMMARY
+          if [ -d "dist/js/chunks" ]; then
+            du -sh dist/js/chunks/*.js | sort -h | head -10 >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Total Size" >> $GITHUB_STEP_SUMMARY
+          du -sh dist/ >> $GITHUB_STEP_SUMMARY
+
+  type-coverage:
+    name: Type Coverage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 8
+      
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+      
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      
+      - name: Install type-coverage
+        run: pnpm add -D type-coverage
+        continue-on-error: true
+      
+      - name: Check type coverage
+        run: |
+          if command -v type-coverage &> /dev/null; then
+            pnpm exec type-coverage --detail
+          else
+            echo "type-coverage not available, skipping..."
+          fi
+        continue-on-error: true
+

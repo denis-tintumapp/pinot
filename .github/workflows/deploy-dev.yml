@@ -1,0 +1,53 @@
+name: Deploy to Dev
+
+on:
+  push:
+    branches:
+      - develop
+
+jobs:
+  deploy-dev:
+    name: Deploy to Development
+    runs-on: ubuntu-latest
+    environment:
+      name: dev
+      url: https://pinot-dev.web.app
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 8
+      
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+      
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      
+      - name: Build application
+        run: pnpm run build
+      
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+      
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+      
+      - name: Deploy to Firebase Dev
+        run: |
+          firebase use dev --token "${{ secrets.FIREBASE_TOKEN_DEV }}"
+          firebase deploy --only hosting --project pinot-dev --token "${{ secrets.FIREBASE_TOKEN_DEV }}"
+      
+      - name: Deploy Firestore Rules (Dev)
+        run: |
+          firebase deploy --only firestore:rules --project pinot-dev --token "${{ secrets.FIREBASE_TOKEN_DEV }}"
+        continue-on-error: true
+      
+      - name: Deployment Summary
+        run: |
+          echo "✅ Deployed to Dev Environment"
+          echo "🌐 URL: https://pinot-dev.web.app"
+

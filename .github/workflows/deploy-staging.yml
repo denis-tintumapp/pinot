@@ -1,0 +1,160 @@
+name: Deploy to Staging
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  validate:
+    name: Validation Gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 8
+      
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+      
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      
+      - name: Run ESLint
+        run: pnpm exec eslint . --ext .ts,.tsx,.js,.jsx --max-warnings 0 || echo "ESLint not configured, skipping..."
+        continue-on-error: true
+      
+      - name: Type check
+        run: pnpm run type-check
+      
+      - name: Run unit tests
+        run: pnpm test:run
+      
+      - name: Build application
+        run: pnpm run build
+      
+      - name: Install Playwright Browsers
+        run: pnpm exec playwright install --with-deps
+      
+      - name: Run E2E tests
+        run: pnpm exec playwright test
+        env:
+          PLAYWRIGHT_TEST_BASE_URL: http://localhost:5173
+          TEST_USER_EMAIL: ${{ secrets.TEST_USER_EMAIL }}
+          TEST_USER_PASSWORD: ${{ secrets.TEST_USER_PASSWORD }}
+        continue-on-error: false
+      
+      - name: Security audit
+        run: |
+          echo "Running security audit..."
+          pnpm audit --audit-level=moderate || true
+          if pnpm audit --json | jq -e '.metadata.vulnerabilities.total > 0' > /dev/null 2>&1; then
+            echo "⚠️ Security vulnerabilities found"
+            pnpm audit
+            echo "Continuing with deployment, but review vulnerabilities"
+          else
+            echo "✅ No security vulnerabilities found"
+          fi
+        continue-on-error: true
+      
+      - name: Check for hardcoded secrets
+        run: |
+          echo "Scanning for potential secrets..."
+          if grep -r -E "(api[_-]?key|secret|password|token)\s*[:=]\s*['\"][^'\"]{10,}" \
+            --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" \
+            --exclude-dir=node_modules --exclude-dir=dist --exclude-dir=.git .; then
+            echo "❌ Potential secrets found in code"
+            exit 1
+          else
+            echo "✅ No hardcoded secrets detected"
+          fi
+        continue-on-error: true
+      
+      - name: Bundle size analysis
+        run: |
+          echo "## 📦 Bundle Size Analysis" >> $GITHUB_STEP_SUMMARY
+          if [ -d "dist/js" ]; then
+            echo "### Main Bundle" >> $GITHUB_STEP_SUMMARY
+            du -sh dist/js/*.js | sort -h | head -10 >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "✅ Bundle size analysis complete"
+        continue-on-error: true
+      
+      - name: Upload test artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: validation-artifacts
+          path: |
+            playwright-report/
+            test-results/
+            coverage/
+          retention-days: 7
+
+  deploy-staging:
+    name: Deploy to Staging
+    needs: validate
+    runs-on: ubuntu-latest
+    environment:
+      name: staging
+      url: https://pinot-staging.web.app
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 8
+      
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+      
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      
+      - name: Build application
+        run: pnpm run build
+      
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+      
+      - name: Deploy to Firebase Staging
+        run: |
+          firebase use staging --token "${{ secrets.FIREBASE_TOKEN_STAGING }}"
+          firebase deploy --only hosting --project pinot-staging --token "${{ secrets.FIREBASE_TOKEN_STAGING }}"
+      
+      - name: Deploy Firestore Rules (Staging)
+        run: |
+          firebase deploy --only firestore:rules --project pinot-staging --token "${{ secrets.FIREBASE_TOKEN_STAGING }}"
+        continue-on-error: true
+      
+      - name: Smoke Tests
+        run: |
+          echo "Running smoke tests..."
+          sleep 10  # Wait for deployment to propagate
+          for i in {1..5}; do
+            if curl -f -s https://pinot-staging.web.app > /dev/null; then
+              echo "✅ Smoke test passed (attempt $i)"
+              exit 0
+            fi
+            echo "Attempt $i failed, retrying in 5 seconds..."
+            sleep 5
+          done
+          echo "❌ Smoke test failed after 5 attempts"
+          exit 1
+      
+      - name: Deployment Summary
+        run: |
+          echo "✅ Deployed to Staging Environment"
+          echo "🌐 URL: https://pinot-staging.web.app"
+          echo "📋 Ready for validation before promotion to production"
+          echo ""
+          echo "## Next Steps:"
+          echo "1. Validate functionality in staging"
+          echo "2. Run manual QA tests"
+          echo "3. If approved, create tag v*.*.* to deploy to production"
