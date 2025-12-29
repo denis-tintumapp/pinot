@@ -1,0 +1,63 @@
+{
+  "compilerOptions": {
+    /* Configuración básica */
+    "target": "ES2022",
+    "module": "ESNext",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "jsx": "react-jsx",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "allowJs": true,
+    "checkJs": false,
+    
+    /* Emit */
+    "outDir": "./dist",
+    "noEmit": true, // Vite maneja la compilación
+    "sourceMap": true,
+    "declaration": false,
+    "declarationMap": false,
+    
+    /* Type Checking */
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+    "strictPropertyInitialization": true,
+    "noImplicitThis": true,
+    "alwaysStrict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": true,
+    
+    /* Completeness */
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    
+    /* Paths y Aliases */
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["web/*"],
+      "@js/*": ["web/js/*"],
+      "@core/*": ["web/js/core/*"]
+    },
+    
+    /* Interop */
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "isolatedModules": true
+  },
+  "include": [
+    "web/**/*.ts",
+    "web/**/*.tsx",
+    "web/**/*.js" // Permitir JS durante la migración gradual
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "functions"
+  ]
+}
+
