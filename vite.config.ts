@@ -82,6 +82,8 @@ export default defineConfig({
     emptyOutDir: true,
     rollupOptions: {
       input: {
+        // Entry point principal de React
+        main: resolve(__dirname, 'web/index.html'),
         // Archivos de autenticación que necesitan ser bundlados con sus dependencias
         'auth/auth': resolve(__dirname, 'web/js/auth/auth.ts'),
         'auth/auth-guard': resolve(__dirname, 'web/js/auth/auth-guard.ts'),
