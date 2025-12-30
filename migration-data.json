@@ -1,0 +1,40 @@
+{
+  "collections": {
+    "anfitriones": [],
+    "eventos": [],
+    "participantes": [],
+    "etiquetas": [],
+    "selecciones": [],
+    "membresias": [],
+    "usuarios": [],
+    "plantillasParticipantes": [],
+    "plantillasEtiquetas": [],
+    "fcmTokens": [],
+    "admin_config": [],
+    "admin_logs": [],
+    "registros_pendientes": [],
+    "oauth_states": []
+  },
+  "metadata": {
+    "exportedAt": "2025-12-30T17:25:58.241Z",
+    "source": "emulator",
+    "checksum": "8ab04a83a772f039769208ff0be90cfd435353b7107d96f231fe1f4f4f5b6ef2",
+    "collections": [
+      "anfitriones",
+      "eventos",
+      "participantes",
+      "etiquetas",
+      "selecciones",
+      "membresias",
+      "usuarios",
+      "plantillasParticipantes",
+      "plantillasEtiquetas",
+      "fcmTokens",
+      "admin_config",
+      "admin_logs",
+      "registros_pendientes",
+      "oauth_states"
+    ],
+    "totalDocuments": 0
+  }
+}
