@@ -38,7 +38,6 @@ jobs:
       
       - name: Deploy to Firebase Dev
         run: |
-          firebase use dev --token "${{ secrets.FIREBASE_TOKEN_DEV }}"
           firebase deploy --only hosting --project pinot-dev --token "${{ secrets.FIREBASE_TOKEN_DEV }}"
       
       - name: Deploy Firestore Rules (Dev)
