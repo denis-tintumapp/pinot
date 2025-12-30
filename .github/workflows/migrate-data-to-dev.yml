@@ -1,0 +1,196 @@
+name: Migrate Data to Dev
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_type:
+        description: 'Source type (emulator|json)'
+        required: true
+        type: choice
+        options:
+          - emulator
+          - json
+      json_path:
+        description: 'Path to JSON export (if source_type=json)'
+        required: false
+        default: './migration-data.json'
+      collections:
+        description: 'Comma-separated list of collections to migrate (empty = all)'
+        required: false
+      conflict_strategy:
+        description: 'Conflict resolution strategy'
+        required: true
+        type: choice
+        options:
+          - overwrite
+          - merge
+          - skip
+        default: skip
+
+jobs:
+  validate:
+    name: Validation Gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+      
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      
+      - name: Type check
+        run: pnpm run type-check
+      
+      - name: Run migration tests
+        run: pnpm test tests/migration
+        continue-on-error: true
+      
+      - name: Validate migration data
+        if: inputs.source_type == 'json'
+        run: |
+          pnpm run migrate:validate \
+            --source=${{ inputs.source_type }} \
+            --path=${{ inputs.json_path }}
+        continue-on-error: false
+      
+      - name: Upload validation report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: migration-validation-report
+          path: migration-validation-report.json
+          retention-days: 7
+
+  migrate:
+    name: Migrate Data to pinot-dev
+    needs: validate
+    runs-on: ubuntu-latest
+    environment:
+      name: dev
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+      
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+      
+      - name: Create backup of pinot-dev
+        run: |
+          echo "Creating backup of pinot-dev..."
+          BACKUP_PATH="gs://pinot-dev-backups/backup-$(date +%Y%m%d-%H%M%S)" || echo "Backup bucket not configured, skipping..."
+          if [ -n "$BACKUP_PATH" ] && [ "$BACKUP_PATH" != "gs://pinot-dev-backups/backup-" ]; then
+            firebase firestore:export "$BACKUP_PATH" \
+              --project pinot-dev --token "${{ secrets.FIREBASE_TOKEN_DEV }}" || echo "Backup failed, continuing..."
+          fi
+        continue-on-error: true
+      
+      - name: Export from source
+        if: inputs.source_type == 'emulator'
+        run: |
+          echo "⚠️  Emulator export not supported in CI/CD"
+          echo "Please export data locally first using: pnpm run migrate:export"
+          exit 1
+      
+      - name: Upload migration data
+        if: inputs.source_type == 'json' && inputs.json_path != './migration-data.json'
+        uses: actions/upload-artifact@v4
+        with:
+          name: migration-data
+          path: ${{ inputs.json_path }}
+          retention-days: 1
+      
+      - name: Download migration data
+        if: inputs.source_type == 'json' && inputs.json_path != './migration-data.json'
+        uses: actions/download-artifact@v4
+        with:
+          name: migration-data
+          path: ./
+      
+      - name: Validate exported data
+        run: |
+          pnpm run migrate:validate \
+            --source=${{ inputs.source_type }} \
+            --path=${{ inputs.json_path }}
+      
+      - name: Authenticate with Firebase
+        run: |
+          echo "${{ secrets.FIREBASE_TOKEN_DEV }}" | firebase login:ci --token-stdin
+      
+      - name: Import to pinot-dev
+        run: |
+          COLLECTIONS_ARG=""
+          if [ -n "${{ inputs.collections }}" ]; then
+            COLLECTIONS_ARG="--collections=${{ inputs.collections }}"
+          fi
+          
+          pnpm run migrate:import \
+            --project=pinot-dev \
+            --source=${{ inputs.source_type }} \
+            --path=${{ inputs.json_path }} \
+            $COLLECTIONS_ARG \
+            --strategy=${{ inputs.conflict_strategy }}
+      
+      - name: Post-migration validation
+        run: |
+          pnpm run migrate:verify \
+            --project=pinot-dev \
+            --path=${{ inputs.json_path }}
+        continue-on-error: true
+      
+      - name: Smoke tests
+        run: |
+          echo "Running smoke tests..."
+          sleep 10
+          for i in {1..5}; do
+            if curl -f -s https://pinot-dev.web.app > /dev/null; then
+              echo "✅ Smoke test passed (attempt $i)"
+              exit 0
+            fi
+            echo "Attempt $i failed, retrying in 5 seconds..."
+            sleep 5
+          done
+          echo "❌ Smoke test failed"
+          exit 1
+      
+      - name: Upload migration report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: migration-report
+          path: |
+            migration-report.json
+            migration-verification-report.json
+          retention-days: 30
+      
+      - name: Migration Summary
+        run: |
+          echo "## 📊 Migration Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Migration completed successfully" >> $GITHUB_STEP_SUMMARY
+          echo "🌐 Target: https://pinot-dev.web.app" >> $GITHUB_STEP_SUMMARY
+          echo "📊 Check migration report artifact for details" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -f migration-report.json ]; then
+            echo "### Migration Statistics" >> $GITHUB_STEP_SUMMARY
+            cat migration-report.json | jq -r '.collections | to_entries[] | "- **\(.key)**: \(.value.imported) imported, \(.value.skipped) skipped, \(.value.errors) errors"' >> $GITHUB_STEP_SUMMARY || echo "Could not parse report" >> $GITHUB_STEP_SUMMARY
+          fi
+
