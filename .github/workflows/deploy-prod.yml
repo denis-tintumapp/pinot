@@ -164,8 +164,7 @@ jobs:
       - name: Deploy to Firebase Production
         id: deploy
         run: |
-          firebase use prod --token "${{ secrets.FIREBASE_TOKEN_PROD }}"
-          firebase deploy --only hosting --project pinot-prod --token "${{ secrets.FIREBASE_TOKEN_PROD }}"
+            firebase deploy --only hosting --project pinot-prod --token "${{ secrets.FIREBASE_TOKEN_PROD }}"
       
       - name: Deploy Firestore Rules and Indexes
         run: |

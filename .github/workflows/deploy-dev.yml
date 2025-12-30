@@ -33,9 +33,6 @@ jobs:
       - name: Install Firebase CLI
         run: npm install -g firebase-tools
       
-      - name: Install Firebase CLI
-        run: npm install -g firebase-tools
-      
       - name: Deploy to Firebase Dev
         run: |
           firebase deploy --only hosting --project pinot-dev --token "${{ secrets.FIREBASE_TOKEN_DEV }}"
