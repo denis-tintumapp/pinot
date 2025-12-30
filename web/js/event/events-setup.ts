@@ -17,7 +17,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../core/firebase-init';
 import { NAIPES_TRUCO } from '../constantes';
-import { registrarLog } from '../../js/admin/admin-logger';
+import { registrarLog } from '../admin/admin-logger';
 import { requireAuth } from '../auth/auth-guard';
 
 interface Participante {
